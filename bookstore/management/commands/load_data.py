@@ -24,7 +24,7 @@ class Command(BaseCommand):
         authors_relationships_to_create = []
 
         try:
-            with open(books_file_path, mode='r', encoding='utf-8') as file:
+            with open(books_file_path, mode='r', encoding='utf-8', newline='') as file:
                 # cleaned_lines = (line.replace(r'\"', '"').replace(
                 #     r'"";', '";') for line in file)
                 # cleaned_file_buffer = io.StringIO("".join(cleaned_lines))
@@ -68,7 +68,7 @@ class Command(BaseCommand):
                             }
                         )
                         author_names = [a.strip()
-                                        for a in author_str.split('/')]
+                                        for a in author_str.split(',')]
                         for author_name in author_names:
                             if not author_names:
                                 continue
@@ -121,7 +121,7 @@ class Command(BaseCommand):
         new_readers_in_batch = set()
 
         try:
-            with open(ratings_file_path, mode='r', encoding="latin-1") as file:
+            with open(ratings_file_path, mode='r', encoding="utf-8", newline='') as file:
                 reader = csv.reader(file, delimiter=';',
                                     quoting=csv.QUOTE_MINIMAL)
                 header = next(reader)
