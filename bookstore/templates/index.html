@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% block index %}
+<section class="search-page-section pt-5" id="searchPageSection">
+        <div class="hero-section">
+            <div class="container hero-content">
+                <div class="row height d-flex justify-content-center align-items-center">
+                    <div class="col-lg-8 col-xl-8">
+                        <div class="text-center mb-5">
+                            <h1 class="display-4 fw-bold text-dark mb-3">BookStore</h1>
+                            <p class="lead text-dark mb-5">Search Your Favorite Book</p>
+                        </div>
+                        <div class="search-container">
+                            <div class="search-box bg-white rounded-4 p-4 shadow-lg">
+                                <div class="search-input-wrapper position-relative">
+                                    <div class="input-group input-group-lg">
+                                        <span class="input-group-text bg-transparent border-0">
+                                            <i class="fas fa-search text-muted"></i>
+                                        </span>
+                                        <input 
+                                            type="text" 
+                                            id="searchInput" 
+                                            class="form-control border-0 shadow-none" 
+                                            placeholder=""
+                                            style="font-size: 0.9rem; padding: 12px 15px;"
+                                        ><ul id="searchResults"></ul>
+                                        <button 
+                                            class="btn btn-custom-primary btn-lg px-4" 
+                                            id="searchButton"
+                                            style="border-radius: 0 15px 15px 0;"
+                                        >
+                                            <i class="fas fa-search me-2"></i>Search
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock index %}
+{% block script %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script>
+  $(document).ready(function () {
+    $('#searchButton').click(function () {
+        performSearch();
+    });
+
+    $('#searchInput').keyup(function (event) {
+        if (event.which === 13) {
+            event.preventDefault();
+            performSearch();
+        }
+    });
+
+    function performSearch() {
+        var query = $('#searchInput').val();
+        window.location.href = 'search/?search=' + encodeURIComponent(query);
+        console.log(query)
+    }
+});
+</script>
+<script>
+    const searchInput = document.getElementById('searchInput');
+    const searchButton = document.getElementById('searchButton');
+
+    function toggleSearchButton() {
+        if (searchInput.value.length >= 3) {
+            searchButton.disabled = false;
+        } else {
+            searchButton.disabled = true;
+        }
+    }
+    searchInput.addEventListener('input', toggleSearchButton);
+
+    toggleSearchButton();
+</script>
+{% endblock script %}

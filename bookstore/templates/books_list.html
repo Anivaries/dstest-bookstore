@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+{% block title %}Browse All Books{% endblock title%}
+{% block all_books %}
+<div class="container my-5">
+    <h1 class="text-center mb-5">All Books</h1>
+    
+    {% if books %}
+        <!-- Book Grid -->
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4 mb-5">
+            {% for book in books %}
+                <div class="col">
+                    <div class="card h-100 shadow-sm hover-shadow">
+                        <!-- Book Cover Image -->
+                        
+                        <div class="bg-image hover-overlay ripple" data-mdb-ripple-color="light">
+                            {% if book.img_l %}
+                                <a href="{% url 'book-detail' book.isbn %}">
+                                    <img src="{{ book.img_l }}" 
+                                     alt="{{ book.book_title }}" 
+                                     class="card-img-top"
+                                     style="height: 300px; object-fit: cover;"
+                                     onerror="this.onerror=null; this.src='{% if book.img_s %}{{ book.img_s }}{% else %}/static/images/no-cover.jpg{% endif %}';">
+                                </a>
+                            {% elif book.img_m %}
+                                <img src="{{ book.img_m }}" 
+                                     alt="{{ book.book_title }}" 
+                                     class="card-img-top"
+                                     style="height: 300px; object-fit: cover;">
+
+                            {% else %}
+                                <div class="d-flex flex-column align-items-center justify-content-center bg-light" style="height: 300px;">
+                                    <i class="fas fa-book fa-4x text-muted mb-3"></i>
+                                    <p class="text-muted">No Cover Available</p>
+                                </div>
+                            
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Book Details -->
+                        <div class="card-body">
+                            <h5 class="card-title mb-3">
+                                <a href="{% url 'book-detail' book.isbn %}" class="text-dark text-decoration-none">
+                                    {{ book.book_title|truncatewords:8 }}
+                                </a>
+                            </h5>
+                            
+                            <!-- Authors -->
+                            <p class="card-text text-muted mb-2">
+                                <b>Author:</b>
+                                {% if book.authors.exists %}
+                                    {% for author in book.authors.all %}{{ author.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                                {% else %}
+                                    <span class="fst-italic">Unknown Author</span>
+                                {% endif %}
+                            </p>
+                            
+                            <!-- Publisher and Year -->
+                            <div class="text-muted small">
+                                {% if book.publisher %}
+                                    <p class="mb-1">
+                                        <b>Publisher:</b>
+                                        {{ book.publisher.name }}
+                                    </p>
+                                {% endif %}
+                                {% if book.year_of_publication %}
+                                    <p class="mb-1">
+                                        <b>Year Published</b>
+                                        {{ book.year_of_publication }}
+                                    </p>
+                                {% endif %}
+                                <p class="mb-0">
+                                    <b>ISBN</b>
+                                    <code>{{ book.isbn }}</code>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+            <nav aria-label="Book pagination">
+                <ul class="pagination pagination-circle justify-content-center mb-0">
+                    <!-- First Page -->
+                    <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+                        {% if page_obj.has_previous %}
+                            <a class="page-link" href="?{% if querystring %}{{ querystring }}&{% endif %}page=1">First</a>
+                        {% else %}
+                            <span class="page-link">First</span>
+                        {% endif %}
+                    </li>
+                    
+                    <!-- Previous Page -->
+                    <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+                        {% if page_obj.has_previous %}
+                        <a class="page-link" href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.previous_page_number }}">
+                            &laquo;
+                        </a>
+                        {% else %}
+                            <span class="page-link" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </span>
+                        {% endif %}
+                    </li>
+
+                    <!-- Page Numbers -->
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active" aria-current="page">
+                                <span class="page-link">
+                                    {{ num }}
+                                    <span class="visually-hidden">(current)</span>
+                                </span>
+                            </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ num }}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    <!-- Next Page -->
+                    <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+                        {% if page_obj.has_next %}
+                            <a class="page-link" href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.next_page_number }}">
+                                &raquo;
+                            </a>
+
+                        {% else %}
+                            <span class="page-link" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </span>
+                        {% endif %}
+                    </li>
+                    
+                    <!-- Last Page -->
+                    <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+                        {% if page_obj.has_next %}
+                            <a class="page-link" href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.paginator.num_pages }}">Last</a>
+                        {% else %}
+                            <span class="page-link">Last</span>
+                        {% endif %}
+                    </li>
+                </ul>
+                
+                <!-- Page Info -->
+                <p class="text-center text-muted mt-3 mb-0">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                    <span class="text-muted">({{ page_obj.paginator.count }} books total)</span>
+                </p>
+            </nav>
+        {% endif %}
+    {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-book-open fa-5x text-muted mb-4"></i>
+            <p class="text-muted h5">No books available at the moment.</p>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+.hover-shadow {
+    transition: box-shadow 0.3s ease-in-out;
+}
+
+.hover-shadow:hover {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2) !important;
+}
+
+.card-title a:hover {
+    color: #1266f1 !important;
+}
+</style>
+{% endblock all_books %}

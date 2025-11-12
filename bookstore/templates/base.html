@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% endblock title %}</title>
+    {% block link %}
+    <link
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    rel="stylesheet"
+    />
+    <link
+    href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"
+    rel="stylesheet"
+    />
+    <link
+    href="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/9.2.0/mdb.min.css"
+    rel="stylesheet"
+    />
+    {% endblock link%}
+    
+    {% block style %}{% endblock style %}
+</head>
+<body>
+    {% include 'navbar.html' %}
+
+   {% block index %}{% endblock index %}
+   {% block all_books %}{% endblock all_books %}
+   {% block book_detail %}{% endblock book_detail %}
+   {% block books_search_result %}{% endblock books_search_result %}
+   {% block export_data %}{% endblock export_data %}
+<script
+type="text/javascript"
+src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/9.2.0/mdb.umd.min.js"
+></script>
+{% block script %}
+
+{% endblock script %}
+</body>
+</html>
+
+
+

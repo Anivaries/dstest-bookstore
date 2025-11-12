@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block export_data %}
+<div class="container">
+  <div class="row">
+    <div class="col-6">
+      <form method="get">
+      <h3>Select fields to export:</h3>
+      {{ form.fields }}
+      
+      <h3>Choose file format:</h3>
+      {{ form.file_format }}
+      
+      <button type="submit">Download</button>
+    </form>
+    </div>
+    <div class="col-6">
+        <ul>
+        {% for file in existing_files %}
+          <li>
+            <a href="?download={{ file }}">{{ file }}</a>
+          </li>
+        {% empty %}
+          <li>No pre-generated files available.</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+
+{% endblock export_data %}

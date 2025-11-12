@@ -1,0 +1,242 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ book.book_title }}{% endblock %}
+
+{% block style %}
+<style>
+.table-borderless td {
+    padding: 0.75rem 0.5rem;
+}
+
+.badge {
+    font-size: 0.9rem;
+    font-weight: normal;
+    padding: 0.4rem 0.8rem;
+}
+
+.btn-block {
+    width: 100%;
+}
+.carousel-indicators [data-mdb-target] {
+  background-color: #000;       /* black dots */
+  opacity: 0.6;                 /* slightly transparent */
+}
+
+.carousel-indicators .active {
+  background-color: #007bff;    /* highlight active one (Bootstrap blue) */
+  opacity: 1;
+}
+.carousel-control-prev-icon,
+.carousel-control-next-icon {
+  filter: invert(1) grayscale(100); /* turn them black instead of white */
+}
+</style>
+{% endblock style %}
+{% block book_detail %}
+<div class="container my-5">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'index' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'books-list' %}">All Books</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ book.book_title|truncatewords:5 }}</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <!-- Book Cover Column -->
+        <div class="col-lg-4 col-md-5 mb-4">
+            <div class="card shadow-sm">
+                <div class="bg-image">
+                    <img src="{{ book.img_l }}" 
+                         alt="{{ book.book_title }}" 
+                         class="card-img-top"
+                         style="width: 100%; height: auto; max-height: 600px; object-fit: contain;">
+                </div>
+            </div>
+        </div>
+
+        <!-- Book Details Column -->
+        <div class="col-lg-8 col-md-7">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <!-- Title -->
+                    <h1 class="card-title mb-3">{{ book.book_title }}</h1>
+                    
+                    <!-- Rating (placeholder) -->
+                    {% if avg_rating != None %}
+                    <div class="mb-3">
+                        Rating:<span class="text-muted ms-2">{{avg_rating}} / 10 (Total {{total_ratings}})</span>
+                    </div>
+                    {% else %}
+                    <div class="mb-3">
+                        <span class="text-muted ms-2">Be first to rate this book.</span>
+                    </div>
+                    {% endif %}
+                    <hr>
+
+                    <!-- Book Information -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="mb-3"><i class="fas fa-info-circle me-2 text-primary"></i>Book Information</h5>
+                            
+                            <table class="table table-borderless">
+                                <tbody>
+                                    <!-- Authors -->
+                                    <tr>
+                                        <td class="fw-bold" style="width: 30%;"><i class="fas fa-user-edit me-2 text-muted"></i>Author(s):</td>
+                                        <td>
+                                            {% if book.authors.exists %}
+                                                {% for author in book.authors.all %}
+                                                    <span class="me-1">
+                                                        {{ author.name }}
+                                                    </span>
+                                                {% endfor %}
+                                            {% else %}
+                                                <span class="text-muted fst-italic">Unknown Author</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    
+                                    <!-- ISBN -->
+                                    <tr>
+                                        <td class="fw-bold"><i class="fas fa-barcode me-2 text-muted"></i>ISBN:</td>
+                                        <td><code class="fs-6">{{ book.isbn }}</code></td>
+                                    </tr>
+                                    
+                                    <!-- Publisher -->
+                                    {% if book.publisher %}
+                                    <tr>
+                                        <td class="fw-bold"><i class="fas fa-building me-2 text-muted"></i>Publisher:</td>
+                                        <td>
+                                            <span>
+                                                {{ book.publisher.name }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+                                    
+                                    <!-- Year of Publication -->
+                                    {% if book.year_of_publication %}
+                                    <tr>
+                                        <td class="fw-bold"><i class="far fa-calendar-alt me-2 text-muted"></i>Publication Year:</td>
+                                        <td>{{ book.year_of_publication }}</td>
+                                    </tr>
+                                    {% endif %}
+                                    
+                                    <!-- Language (if you have this field) -->
+                                    <tr>
+                                        <td class="fw-bold"><i class="fas fa-language me-2 text-muted"></i>Language:</td>
+                                        <td>English</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    {% comment %} <hr> {% endcomment %}
+
+                    <!-- Description (if you have this field) -->
+                    {% comment %} <div class="mb-4">
+                        <h5 class="mb-3"><i class="fas fa-align-left me-2 text-primary"></i>Description</h5>
+                        <p class="text-muted">
+                            {% if book.description %}
+                                {{ book.description }}
+                            {% else %}
+                                No description available for this book.
+                            {% endif %}
+                        </p>
+                    </div> {% endcomment %}
+
+                    <hr>
+                    <!-- Action Buttons -->
+                    <div class="d-flex gap-2 mt-4">
+                        <a href="{% url 'books-list' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to All Books
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+<div class="container my-5">
+    {% comment %} {% if recomm_books.0.algo %}
+    <ul>
+        {% for b in recomm_books %}
+        <li>
+            {{b.book.title}} - corr: {{b.book.corr}}
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %} {% endcomment %}
+
+    <!--  Carousel  -->
+    <div class="container my-5">
+        {% if low_corr %}
+        We don’t have enough user data for this book to make personalized recommendations. We could add other author's books or top rated books.
+        {% else %}
+        {% if slides.0.0.fb_author %}
+        <h5 class="text-center mb-5">Books recommended by author due to lack of ratings</h5>
+        {% elif slides.0.0.fb_top_rated %}
+        <h5 class="text-center mb-5">Books recommended by top rated books due to lack of ratings and author books</h5>
+        {% elif slides.0.0.algo %}
+        <h5 class="text-center mb-5">Books recommended by the algorithm</h5>
+        {% endif %}
+        
+        <div id="multiItemCarousel" class="carousel slide" data-mdb-ride="carousel" data-mdb-carousel-init>
+            <div class="carousel-indicators">
+                {% for i in indicators %}
+                <button type="button" data-mdb-target="#multiItemCarousel" data-mdb-slide-to="{{ forloop.counter0 }}" {% if forloop.first %}class="active"{% endif %}></button>
+                {% endfor %}
+            </div>
+            <div class="carousel-inner py-4">
+                {% for slide in slides %}
+                <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                    <div class="row">
+                        {% for b in slide %}
+                        <div class="col-lg-4 col-md-6">
+                            <div class="card h-100" style="min-height: 380px;">
+                                <a href="{% url 'book-detail' b.book.isbn %}"><img src="{{ b.book.img }}" class="card-img-top" alt="{{ b.book.title }}" style="height:200px;object-fit:contain;"></a>
+                                <div class="card-body d-flex flex-column justify-content-between">
+                                    <div>
+                                    <h5 class="card-title">{{ b.book.title }}</h5>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center mt-auto">
+                                    <span class="h5 mb-0 text-primary">{{ b.book.author }}</span>
+                                    {% if b.book.corr %}
+                                    <button class="btn btn-primary btn-sm">{{b.book.corr}}</button>
+                                    {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <button class="carousel-control-prev" type="button" data-mdb-target="#multiItemCarousel" data-mdb-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Previous</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-mdb-target="#multiItemCarousel" data-mdb-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Next</span>
+            </button>
+        </div>
+        {% endif %}
+    </div> 
+    {% comment %} {% endif %} {% endcomment %}
+    <!-- Carousel end -->
+</div>
+
+    
+
+
+</div>
+
+
+{% endblock book_detail %}
+{% block script %}
+
+{% endblock script %}

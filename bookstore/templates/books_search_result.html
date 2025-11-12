@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block books_search_result %}
+<div class="container pt-5">
+    <div class="row">
+        <ul>
+            {% for r in results %}
+            <li>{{r}} ({{r.isbn}})</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endblock books_search_result %}
