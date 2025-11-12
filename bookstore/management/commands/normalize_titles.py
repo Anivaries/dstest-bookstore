@@ -37,18 +37,27 @@ def normalize_title(title: str) -> str:
 
 
 class Command(BaseCommand):
+    BATCH_SIZE = 1000
 
     def handle(self, *args, **options):
-        books = BookStoreModel.objects.prefetch_related('authors').all()
-        books_to_update = []
+        qs = BookStoreModel.objects.prefetch_related('authors').all()
+        total = qs.count()
+        self.stdout.write(f"Total books: {total}")
 
-        for book in books:
-            book.normalized_title = normalize_title(book.book_title)
-            authors = [a.name for a in book.authors.all()]
-            book.normalized_authors = " ".join(
-                sorted([normalize_author(a) for a in authors]))
-            books_to_update.append(book)
-        BookStoreModel.objects.bulk_update(
-            books_to_update, ['normalized_title', 'normalized_authors'])
-        self.stdout.write(self.style.SUCCESS(
-            f"Updated {len(books_to_update)} books"))
+        for start in range(0, total, self.BATCH_SIZE):
+            end = min(start + self.BATCH_SIZE, total)
+            books = qs[start:end]
+
+            books_to_update = []
+
+            for book in books:
+                book.normalized_title = normalize_title(book.book_title)
+                authors = [a.name for a in book.authors.all()]
+                book.normalized_authors = " ".join(
+                    sorted([normalize_author(a) for a in authors]))
+                books_to_update.append(book)
+
+            BookStoreModel.objects.bulk_update(
+                books_to_update, ['normalized_title', 'normalized_authors'])
+            self.stdout.write(self.style.SUCCESS(
+                f"Updated books {start + 1}-{end}"))
