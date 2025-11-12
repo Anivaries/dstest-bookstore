@@ -176,7 +176,7 @@ class BookSearchView(ListView):
         qs = BookStoreModel.objects.all().order_by('book_title')
         if query:
             qs = qs.filter(book_title__icontains=query)
-        return qs[:50]
+        return qs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
