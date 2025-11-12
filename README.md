@@ -21,7 +21,7 @@ How to run:
     }
     ```
 6. Run migrations: CD to where ```manage.py``` file is and run ```python manage.py migrate```. This will populate the database with our tables from ```models.py``` file
-7. Now, for this part, files which i use to populate the database are too large for github so they can be downloaded here: ADD URL. Files being used for this are: ADD FILES PATHS.
+7. Now, for this part, files which i use to populate the database are too large for github so they can be downloaded here: http://88.99.170.77:8000/export/. Files being used for this are: ADD FILES PATHS.
     7a. Put these files in the project directory. I use working_files/ folder for this
 8. CD to where ```manage.py``` file is and run ```python3 manage.py load_data --books_file path_to/BX-Books-cleaned_new.csv --ratings_file path_to/BX-Books-clean-ratings_new.csv```. This will populate the database with books and ratings.
 9. Now, these files are not completely clean, there is one step i used to clean files in django, which is: ```python3 manage.py fix_title_quotes```. There were some leftover quotes from csv escaping double quotes. This command fixes it by fetching names from openlibrary api. 

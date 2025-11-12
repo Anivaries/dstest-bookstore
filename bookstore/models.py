@@ -1,5 +1,37 @@
+import re
+import unidecode
+
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
+
+
+def normalize_author(name: str) -> str:
+    if not name:
+        return ""
+    name = unidecode.unidecode(name).lower().strip()
+    name = re.sub(r'[^a-z\s]', '', name)
+    parts = [p.strip() for p in name.split(',')]
+    if len(parts) == 2:
+        name = f"{parts[1]} {parts[0]}"
+    return re.sub(r'\s+', ' ', name)
+
+
+def normalize_title(title: str) -> str:
+    if not title:
+        return ""
+
+    title = title.lower().strip()
+
+    title = unidecode.unidecode(title)
+
+    title = re.sub(r'\([^)]*\)', '', title)
+    title = re.sub(r'\[[^]]*\]', '', title)
+    title = re.sub(
+        r'\b(edition|ed\.?|vol\.?|volume|book|series|journal|guide|part|#?\d+)\b', '', title)
+    title = re.sub(r'[^a-z0-9\s]', '', title)
+    title = re.sub(r'\s+', ' ', title)
+
+    return title.strip()
 
 
 class AuthorModel(models.Model):
@@ -26,7 +58,9 @@ class BookReaderModel(models.Model):
 class BookStoreModel(models.Model):
     isbn = models.CharField(max_length=13, primary_key=True)
     book_title = models.CharField(max_length=512)
+    normalized_title = models.CharField(max_length=255, editable=False)
     authors = models.ManyToManyField(AuthorModel, related_name='books')
+    normalized_authors = models.CharField(max_length=255, editable=False)
     year_of_publication = models.PositiveSmallIntegerField(
         null=True, blank=True)
     publisher = models.ForeignKey(
@@ -34,6 +68,12 @@ class BookStoreModel(models.Model):
     img_s = models.URLField(max_length=512, null=True, blank=True)
     img_m = models.URLField(max_length=512, null=True, blank=True)
     img_l = models.URLField(max_length=512, null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        self.normalized_title = normalize_title(self.book_title)
+        self.normalized_authors = " ".join(
+            sorted([normalize_author(a.name) for a in self.authors.all()]))
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.book_title}"

@@ -4,10 +4,11 @@ from . import models
 
 
 class BookStoreAdmin(admin.ModelAdmin):
-    list_display = ('isbn', 'book_title', 'year_of_publication',
+    list_display = ('isbn', 'book_title', 'normalized_title', 'year_of_publication', 'normalized_authors',
                     'publisher_name_display')
     list_filter = ('year_of_publication', 'publisher')
     search_fields = ('isbn', 'book_title')
+    readonly_fields = ('normalized_title', 'normalized_authors')
     autocomplete_fields = ['authors', 'publisher']
 
     def get_queryset(self, request):

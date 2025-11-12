@@ -30,10 +30,14 @@ TOP_N = 12
 DOWNLOAD_DIR = os.path.join(settings.BASE_DIR, 'bookstore/downloads')
 
 
+def make_book_key(book):
+    return f"{book.normalized_title} {book.normalized_authors}".strip()
+
+
 def recommend_books(isbn,):
     book = BookStoreModel.objects.get(isbn=isbn)
     target_books = BookStoreModel.objects.filter(
-        book_title__icontains=book.book_title)
+        normalized_title=book.normalized_title)
     total_ratings = BookRatingModel.objects.filter(
         book__in=target_books,
         rating__isnull=False
@@ -62,7 +66,6 @@ def recommend_books(isbn,):
 
         return [{'fb_top_rated': True, 'book': {'title': b.book_title, 'isbn': b.isbn, 'author': b.authors.get(), 'avg_rating': b.avg_rating, 'img': b.img_m}} for b in random_top_books]
     # Collaborative filtering
-
     readers = BookReaderModel.objects.filter(
         book_ratings__book__in=target_books,
         book_ratings__rating__isnull=False
@@ -71,32 +74,32 @@ def recommend_books(isbn,):
     ratings_qs = BookRatingModel.objects.filter(
         user__in=readers,
         rating__isnull=False
-    ).select_related('book')
+    ).select_related('book').prefetch_related('book__authors')
 
     ratings_dict = defaultdict(list)
     for r in ratings_qs:
-        ratings_dict[r.book.book_title.lower()].append((r.user_id, r.rating))
-    selected_title = book.book_title.lower().strip()
+        key = f"{r.book.normalized_title} {r.book.normalized_authors}"
+        ratings_dict[key].append((r.user_id, r.rating))
 
-    books_to_compare_titles = [
-        title for title, vals in ratings_dict.items()
-        if len(vals) >= MIN_RATINGS
-    ]
+    selected_key = f"{book.normalized_title} {book.normalized_authors}"
+
+    books_to_compare_keys = [
+        key for key, vals in ratings_dict.items() if len(vals) >= MIN_RATINGS]
+
     rows = []
-    for title in books_to_compare_titles:
-        for user_id, rating in ratings_dict[title]:
+    for key in books_to_compare_keys:
+        for user_id, rating in ratings_dict[key]:
             rows.append(
-                {'user_id': user_id, 'book_title': title, 'rating': rating})
+                {'user_id': user_id, 'book_key': key, 'rating': rating})
 
     df = pd.DataFrame(rows)
+    df = df.groupby(['user_id', 'book_key'], as_index=False)['rating'].mean()
+    pivot_df = df.pivot(index='user_id', columns='book_key', values='rating')
+    pivot_df = pivot_df[pivot_df[selected_key].notna()]
 
-    df = df.groupby(['user_id', 'book_title'], as_index=False)['rating'].mean()
+    correlations = pivot_df.corrwith(pivot_df[selected_key]).drop(
+        selected_key).sort_values(ascending=False)
 
-    pivot_df = df.pivot(
-        index='user_id', columns='book_title', values='rating')
-    pivot_df = pivot_df[pivot_df[selected_title].notna()]
-    correlations = pivot_df.corrwith(pivot_df[selected_title]).drop(
-        selected_title).sort_values(ascending=False)
     recommendations = []
     # print("Books to compare:", books_to_compare_titles)
     # for title in books_to_compare_titles:
@@ -105,17 +108,43 @@ def recommend_books(isbn,):
         # Too little ratings to have enough users for corrwith, 'fixing' this would be using smaller number for CANDIDATE_MIN_RATINGS
         return recommendations
     # Fetch top_n books from correlations
-    top_books_ids = correlations.head(TOP_N).index.tolist()
-    recommended_books = BookStoreModel.objects.filter(
-        book_title__lower__in=top_books_ids)
+    top_keys = correlations.head(TOP_N).index.tolist()
 
-    for title in top_books_ids:
-        b = recommended_books.filter(book_title__iexact=title).first()
-        avg_rating = BookRatingModel.objects.filter(
-            book=b).aggregate(avg=Avg('rating'))['avg']
-        corr = correlations[title]
+    seen_isbns = set()
+    for key in top_keys:
+
+        # Find editions with same normalized title and author
+        candidates = (
+            BookStoreModel.objects
+            .filter(
+                # crude start; can improve
+                normalized_title__icontains=key.split()[0],
+                normalized_authors__icontains=" ".join(
+                    key.split()[len(key.split())-2:])
+            )
+            .annotate(avg_rating=Avg('ratings__rating'))
+            .filter(avg_rating__isnull=False)
+            .order_by('-avg_rating')
+        )
+
+        b = candidates.first()
+        if not b or b.isbn in seen_isbns:
+            continue
+
+        seen_isbns.add(b.normalized_title)
+
         recommendations.append({
-            'algo': True, 'book': {'title': b.book_title, 'avg_rating': avg_rating, 'isbn': b.isbn, 'author': b.authors.get(), 'corr': corr, 'img': b.img_m}})
+            'algo': True,
+            'book': {
+                'title': b.book_title,
+                'avg_rating': b.avg_rating,
+                'isbn': b.isbn,
+                'author': b.authors.first(),
+                'corr': correlations[key],
+                'img': b.img_m
+            }
+        })
+
     return recommendations
 
 
