@@ -1,6 +1,4 @@
 db.sqlite3
-working_files/
-downloads/
 *.csv
 *.tsv
 *.json
