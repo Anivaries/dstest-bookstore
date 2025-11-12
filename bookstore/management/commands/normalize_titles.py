@@ -40,24 +40,26 @@ class Command(BaseCommand):
     BATCH_SIZE = 1000
 
     def handle(self, *args, **options):
-        qs = BookStoreModel.objects.prefetch_related('authors').all()
+        qs = BookStoreModel.objects.prefetch_related('authors')
         total = qs.count()
         self.stdout.write(f"Total books: {total}")
 
-        for start in range(0, total, self.BATCH_SIZE):
-            end = min(start + self.BATCH_SIZE, total)
-            books = qs[start:end]
+        books_to_update = []
+        for book in qs.iterator(chunk_size=self.BATCH_SIZE):
+            book.normalized_title = normalize_title(book.book_title)
 
-            books_to_update = []
+            authors = [a.name for a in book.authors.all() if a.name]
+            normalized_authors = " ".join(
+                sorted([normalize_author(a) for a in authors if normalize_author(a)]))
+            book.normalized_authors = normalized_authors
 
-            for book in books:
-                book.normalized_title = normalize_title(book.book_title)
-                authors = [a.name for a in book.authors.all()]
-                book.normalized_authors = " ".join(
-                    sorted([normalize_author(a) for a in authors]))
-                books_to_update.append(book)
+            books_to_update.append(book)
 
+            if len(books_to_update) >= self.BATCH_SIZE:
+                BookStoreModel.objects.bulk_update(
+                    books_to_update, ['normalized_title', 'normalized_authors'])
+                books_to_update = []
+
+        if books_to_update:
             BookStoreModel.objects.bulk_update(
                 books_to_update, ['normalized_title', 'normalized_authors'])
-            self.stdout.write(self.style.SUCCESS(
-                f"Updated books {start + 1}-{end}"))

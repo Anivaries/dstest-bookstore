@@ -70,8 +70,6 @@ class Command(BaseCommand):
                         author_names = [a.strip()
                                         for a in author_str.split(',')]
                         for author_name in author_names:
-                            if not author_names:
-                                continue
                             if author_name not in known_authors:
                                 author, _ = AuthorModel.objects.get_or_create(
                                     name=author_name)
